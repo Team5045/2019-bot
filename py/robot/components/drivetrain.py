@@ -4,7 +4,7 @@ from ctre import WPI_TalonSRX
 from wpilib import Solenoid
 from wpilib.drive import DifferentialDrive
 from magicbot import tunable
-from robotpy_ext.common_drivers import navx
+import navx
 
 from constants import TALON_TIMEOUT
 from common import util
@@ -239,7 +239,7 @@ class Drivetrain:
                 self.robot_drive.arcadeDrive(
                     self.pending_differential_drive.y,
                     -self.pending_differential_drive.rotation,
-                    squaredInputs=self.pending_differential_drive.squared)
+                    squareInputs=self.pending_differential_drive.squared)
 
             self.pending_differential_drive = None
             self.force_differential_drive = False

@@ -3,3 +3,4 @@ __pycache__
 *.pyc
 robot/paths/*.pickle
 robot/paths/*.csv
+.vscode/
