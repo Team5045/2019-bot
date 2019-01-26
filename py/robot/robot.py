@@ -15,6 +15,7 @@ class SpartaBot(magicbot.MagicRobot):
     drivetrain = drivetrain.Drivetrain
 
     def createObjects(self):
+        self.compressor = wpilib.Compressor()
         self.drive_controller = wpilib.XboxController(0)
         self.drivetrain_left_motor_master = ctre.WPI_TalonSRX(2)
         self.drivetrain_left_motor_slave = ctre.WPI_TalonSRX(3)
@@ -25,13 +26,16 @@ class SpartaBot(magicbot.MagicRobot):
         self.navx = navx.AHRS.create_spi()
 
     def teleopInit(self):
+        self.drivetrain.reset_angle_correction()
         self.drivetrain.shift_high_gear()
-        
+
     def teleopPeriodic(self):
-        a = self.drive_controller.getY(CONTROLLER_LEFT)
-        b = self.drive_controller.getY(CONTROLLER_RIGHT)
-        self.drivetrain_left_motor_master.set(a)
-        self.drivetrain_right_motor_master.set(b)
+        if self.drive_controller.getBumperReleased(CONTROLLER_LEFT):
+            self.drivetrain.shift_toggle()
+            print('toggle')
+        angle = self.drive_controller.getX(CONTROLLER_RIGHT)
+        self.drivetrain.angle_corrected_differential_drive(
+            self.drive_controller.getY(CONTROLLER_LEFT), angle)
 
 
 if __name__ == '__main__':
