@@ -5,8 +5,9 @@ from wpilib import Solenoid
 
 class Elevator:
 
-    motor = WPI_TalonSRX
-    solenoid = DoubleSolenoid
+    left_motor = WPI_TalonSRX
+    right_motor = WPI_TalonSRX
+    wrist_motor = WPI_TalonSRX
 
     def execute(self):
         pass

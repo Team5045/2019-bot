@@ -1,40 +1,77 @@
-from wpilib import AnalogInput, AnalogOutput
+from wpilib import SerialPort
 from magicbot import tunable
+from math import degrees, atan2
 
+IR_SEPARATION = 128
 
 class IRSensor:
 
-    dist_signal = AnalogInput
-    angle_signal = AnalogInput
-    configurator = AnalogOutput
+    serial = SerialPort
+    timeout = tunable(2500)
+    threshold = tunable(300)
 
-    config_timeout = tunable(2500)
-    config_readmode = tunable(True)
+    def setup(self):
+        self.activations = None
+        self.angle = None
+        self.displacement = None
 
-    def configure_arduino(self):
-        '''
-        Uses AnalogOutput to configure Arduino remotely.
-        Timeout: 1000 - 3000 μs
-        Readmode: QTR_EMITTERS_ON(True) / QTR_EMITTERS_OFF(False)
+    def set_config(self):
+        pass
 
-        Scales voltage linearly between 0V and 1.65V for QTR_EMITTERS_ON
-        and between 1.65V and 3.3V for QTR_EMITTERS_OFF 
-        '''
-        volt = 1.65*(self.config_timeout-1000)/2000
+    def get_config(self):
+        pass
+        
+    def get_array_one(self, stringify=False):
+        self.serial.writeString('a')
+        lst = []
+        if stringify:
+            return str(self.serial.readString(16)) 
+        for i in str(self.serial.readString(16)):
+            if i=='1':
+                lst.append(True)
+            elif i=='0':
+                lst.append(False)
+            else:
+                lst.append(None)
+        return lst
 
-        if not self.config_readmode:
-            volt+=1.65
+    def get_array_two(self, stringify=False):
+        self.serial.writeString('b')
+        lst = []
+        if stringify:
+            return str(self.serial.readString(16)) 
+        for i in str(self.serial.readString(16)):
+            if i=='1':
+                lst.append(True)
+            elif i=='0':
+                lst.append(False)
+            else:
+                lst.append(None)
+        return lst
 
-        self.configurator.setVoltage(volt)
-    
-    @property
-    def distance(self):
-        return self.dist_signal.getValue()
+    def get_arrays(self, stringify=False):
+        self.serial.writeString('c')
+        lst = []
+        if stringify:
+            return str(self.serial.readString(16)) 
+        for i in str(self.serial.readString(16)):
+            if i=='1':
+                lst.append(True)
+            elif i=='0':
+                lst.append(False)
+            else:
+                lst.append(None)
+        return lst
 
-    @property
-    def angle(self):
-        return self.angle_signal.getValue()   
+    def compute_orientation(self):
+        c1 = [i for i,j in enumerate(self.activations[:16]) if j]
+        c1 = sum(c1)/len(c1)
+        c2 = [i for i,j in enumerate(self.activations[16:]) if j]
+        c2 = sum(c2)/len(c2)
+
+        self.displacement = 62.5 - (8*c1+8*c2)/2
+        self.angle = degrees(atan2(c1-62.5,IR_SEPARATION/2))
 
     def execute(self):
-        #pipe to pid controller
-        pass
+        self.activations = self.get_arrays()
+        
