@@ -1,31 +1,32 @@
 from wpilib import SerialPort
 from magicbot import tunable
 from math import degrees, atan2
+from networktables import NetworkTables
+import re
 
 IR_SEPARATION = 128
+table = NetworkTables.getTable('components/irsensor')
 
 class IRSensor:
 
     serial = SerialPort
-    timeout = tunable(2500)
     threshold = tunable(300)
 
     def setup(self):
         self.activations = None
         self.angle = None
         self.displacement = None
+        self.saved_t = None
 
-    def set_config(self):
-        pass
+    def set_threshold(self):
+        self.serial.writeString("t"+str(self.threshold))
+        return self.serial.readString(3)==str(self.threshold)
 
-    def get_config(self):
-        pass
-        
     def get_array_one(self, stringify=False):
         self.serial.writeString('a')
         lst = []
         if stringify:
-            return str(self.serial.readString(16)) 
+            return re.sub(r'\W+', '', self.serial.readString(16))
         for i in str(self.serial.readString(16)):
             if i=='1':
                 lst.append(True)
@@ -39,7 +40,7 @@ class IRSensor:
         self.serial.writeString('b')
         lst = []
         if stringify:
-            return str(self.serial.readString(16)) 
+            return re.sub(r'\W+', '', self.serial.readString(16))
         for i in str(self.serial.readString(16)):
             if i=='1':
                 lst.append(True)
@@ -49,19 +50,6 @@ class IRSensor:
                 lst.append(None)
         return lst
 
-    def get_arrays(self, stringify=False):
-        self.serial.writeString('c')
-        lst = []
-        if stringify:
-            return str(self.serial.readString(16)) 
-        for i in str(self.serial.readString(16)):
-            if i=='1':
-                lst.append(True)
-            elif i=='0':
-                lst.append(False)
-            else:
-                lst.append(None)
-        return lst
 
     def compute_orientation(self):
         c1 = [i for i,j in enumerate(self.activations[:16]) if j]
@@ -73,5 +61,12 @@ class IRSensor:
         self.angle = degrees(atan2(c1-62.5,IR_SEPARATION/2))
 
     def execute(self):
-        self.activations = self.get_arrays()
-        
+        if self.saved_t != self.threshold:
+            success = self.set_threshold()
+            if success:
+                self.saved_t = self.threshold
+            else:
+                self.threshold = self.saved_t
+
+        self.activations = self.get_array_one(True)+self.get_array_two(True)
+        table.putValue('/activations', self.activations)

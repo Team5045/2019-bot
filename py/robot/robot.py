@@ -45,8 +45,6 @@ class SpartaBot(magicbot.MagicRobot):
     def teleopPeriodic(self):
         if self.drive_controller.getBumperReleased(CONTROLLER_LEFT):
             self.drivetrain.shift_toggle()
-        if self.drive_controller.getBumperReleased(CONTROLLER_RIGHT):
-            print(self.irsensor.get_array_one())
         angle = self.drive_controller.getX(CONTROLLER_RIGHT)
         self.drivetrain.angle_corrected_differential_drive(
             self.drive_controller.getY(CONTROLLER_LEFT), angle)

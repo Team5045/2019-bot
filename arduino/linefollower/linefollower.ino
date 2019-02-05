@@ -67,6 +67,11 @@ void loop()
         b[16]='\0';
         Serial.println(String(b));
     }
+    else if (incomingStr.indexOf("t") != -1){
+        int n = incomingStr.indexOf("t");
+        threshold = incomingStr.substring(n+1).toInt();
+        Serial.println(threshold);
+    }
   }
   delay(100);
 }
