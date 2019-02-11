@@ -16,7 +16,8 @@ class IRSensor:
         self.activations = None
         self.angle = None
         self.displacement = None
-        self.saved_t = None
+        self.oriented = False
+        self.saved_threshold = 300
 
     def set_threshold(self):
         self.serial.writeString("t"+str(self.threshold))
@@ -60,13 +61,16 @@ class IRSensor:
         self.displacement = 62.5 - (8*c1+8*c2)/2
         self.angle = degrees(atan2(c1-62.5,IR_SEPARATION/2))
 
+    def isOriented(self):
+        return self.oriented
+
     def execute(self):
-        if self.saved_t != self.threshold:
+        if self.saved_threshold != self.threshold:
             success = self.set_threshold()
             if success:
-                self.saved_t = self.threshold
+                self.saved_threshold = self.threshold
             else:
-                self.threshold = self.saved_t
+                self.threshold = self.saved_threshold
 
         self.activations = self.get_array_one(True)+self.get_array_two(True)
         table.putValue('/activations', self.activations)

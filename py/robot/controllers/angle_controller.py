@@ -1,5 +1,5 @@
 from magicbot import tunable
-from robotpy_ext.common_drivers import navx
+import navx
 import hal
 
 from components.drivetrain import Drivetrain

@@ -15,6 +15,7 @@ CAMERA_MODE_DRIVER = 1
 class Targeting:
     def setup(self):
         self.nt = NetworkTables.getTable('limelight')
+        self.oriented = False
 
     def set_led_mode(self, mode):
         self.nt.setNumber('ledMode', mode)
@@ -27,7 +28,10 @@ class Targeting:
                              x=self.nt.getNumber('tx', 0),
                              y=self.nt.getNumber('ty', 0),
                              area=self.nt.getNumber('ta', 0),
-                             skew=self.nt.getNumber('ts', 0))
+                            skew=self.nt.getNumber('ts', 0))
+
+    def isOriented(self):
+        return self.oriented
 
     def execute(self):
         pass
