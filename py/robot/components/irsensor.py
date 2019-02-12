@@ -18,6 +18,7 @@ class IRSensor:
         self.displacement = None
         self.oriented = False
         self.saved_threshold = 300
+        self.saved_activations = None
 
     def set_threshold(self):
         self.serial.writeString("t"+str(self.threshold))
@@ -71,6 +72,7 @@ class IRSensor:
                 self.saved_threshold = self.threshold
             else:
                 self.threshold = self.saved_threshold
-
         self.activations = self.get_array_one(True)+self.get_array_two(True)
-        table.putValue('/activations', self.activations)
+        if self.saved_activations != self.activations:
+            table.putValue('/activations', self.activations)
+            self.saved_activations = self.activations

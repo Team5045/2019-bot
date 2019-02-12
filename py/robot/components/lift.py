@@ -19,9 +19,9 @@ class Lift:
         self.state = LiftState.RETRACTED
         
     def switch(self):
-        if self.state = LiftState.EXTENDED:
+        if self.state == LiftState.EXTENDED:
             self.state = LiftState.RETRACTED
-        elif self.state = LiftState.RETRACTED:
+        elif self.state == LiftState.RETRACTED:
             self.state = LiftState.EXTENDED
 
     def extend(self):

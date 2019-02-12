@@ -5,7 +5,7 @@ import navx
 from magicbot import tunable
 from components import drivetrain, irsensor, targeting, field, manipulator, elevator, lift
 from common import rumbler
-from controllers import angle_controller, position_controller, trajectory_controller
+#from controllers import angle_controller, position_controller, trajectory_controller
 
 CONTROLLER_LEFT = wpilib.XboxController.Hand.kLeft
 CONTROLLER_RIGHT = wpilib.XboxController.Hand.kRight
@@ -20,11 +20,11 @@ class SpartaBot(magicbot.MagicRobot):
     targeting = targeting.Targeting
     field = field.Field
     manipulator = manipulator.Manipulator
-    elevator = elevator.Elevator
-    lift = lift.Lift
-    position_controller = position_controller.PositionController
-    angle_controller = angle_controller.AngleController
-    trajectory_controller = trajectory_controller.TrajectoryController
+    #elevator = elevator.Elevator
+    #lift = lift.Lift
+    #position_controller = position_controller.PositionController
+    #angle_controller = angle_controller.AngleController
+    #trajectory_controller = trajectory_controller.TrajectoryController
 
     def createObjects(self):
         self.drive_controller = wpilib.XboxController(0)
@@ -42,17 +42,17 @@ class SpartaBot(magicbot.MagicRobot):
 
         self.manipulator_belt_motor = ctre.WPI_TalonSRX(7)
         self.manipulator_roller_motor = ctre.WPI_TalonSRX(8)
-        self.manipulator_solenoid = wpilib.DoubleSolenoid(0, 1)
+        self.manipulator_solenoid = wpilib.DoubleSolenoid(1, 3)
 
-        self.elevator_motor = ctre.WPI_TalonSRX(0)
-        self.elevator_slave_motor = ctre.WPI_TalonSRX(1)
-        self.elevator_wrist_motor = ctre.WPI_TalonSRX(6)
-        self.elevator_reverse_limit = wpilib.DigitalInput(0)
-        self.elevator_solenoid = wpilib.DoubleSolenoid(0, 1)
+        #self.elevator_motor = ctre.WPI_TalonSRX(0)
+        #self.elevator_slave_motor = ctre.WPI_TalonSRX(1)
+        #self.elevator_wrist_motor = ctre.WPI_TalonSRX(6)
+        #self.elevator_reverse_limit = wpilib.DigitalInput(0)
+        #self.elevator_solenoid = wpilib.DoubleSolenoid(0, 1)
 
-        self.lift_solenoid = wpilib.DoubleSolenoid(3, 4)
+        #self.lift_solenoid = wpilib.DoubleSolenoid(3, 4)
 
-        self.ultrasonic = wpilib.Ultrasonic(0,0,wpilib.Ultrasonic.kInches)
+        #self.ultrasonic = wpilib.Ultrasonic(0,0,wpilib.Ultrasonic.kInches)
 
     def autonomousInit(self):
         self.teleopInit()
@@ -61,8 +61,8 @@ class SpartaBot(magicbot.MagicRobot):
         self.teleopPeriodic()
 
     def teleopInit(self):
-        self.drivetrain.reset_angle_correction()
         self.drivetrain.shift_high_gear()
+        self.drivetrain.reset_angle_correction()
 
     def teleopPeriodic(self):
         if self.drive_controller.getBumperReleased(CONTROLLER_LEFT):
@@ -72,13 +72,13 @@ class SpartaBot(magicbot.MagicRobot):
         angle = self.drive_controller.getX(CONTROLLER_RIGHT)
         self.drivetrain.angle_corrected_differential_drive(
             self.drive_controller.getY(CONTROLLER_LEFT), angle)
-        if AUTO_PLACE:
-            if self.irsensor.isOriented() or self.targeting.isOriented():
-                # do elevator
-                if self.ultrasonic.getRangeInches()>MANIPULATOR_RANGE:
-                    self.drivetrain.drive(0.2)
-                elif self.ultrasonic.getRangeInches()<MANIPULATOR_RANGE:
-                    self.manipulator.retract()            
+        #if AUTO_PLACE:
+        #    if self.irsensor.isOriented() or self.targeting.isOriented():
+        #        # do elevator
+        #        if self.ultrasonic.getRangeInches()>MANIPULATOR_RANGE:
+        #            self.drivetrain.drive(0.2)
+        #        elif self.ultrasonic.getRangeInches()<MANIPULATOR_RANGE:
+        #            self.manipulator.retract()            
 
 if __name__ == '__main__':
     wpilib.run(SpartaBot)

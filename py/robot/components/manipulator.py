@@ -19,9 +19,9 @@ class Manipulator:
         self.state = ClawState.EXTENDED
 
     def switch(self):
-        if self.state = ClawState.EXTENDED:
+        if self.state == ClawState.EXTENDED:
             self.state = ClawState.RETRACTED
-        elif self.state = ClawState.RETRACTED:
+        elif self.state == ClawState.RETRACTED:
             self.state = ClawState.EXTENDED
 
     def extend(self):
