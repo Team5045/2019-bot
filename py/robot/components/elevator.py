@@ -6,17 +6,17 @@ from wpilib import DoubleSolenoid, DigitalInput
 
 from constants import TALON_TIMEOUT
 
+UNITS_PER_REV = 4096
+DISTANCE_PER_REV = math.pi * 1.786  # pi * sprocket diameter
 
-class ElevatorState(IntEnum):
-    LOCKED = 0
-    RELEASED = 1
-
+GROUND_CUTOFF = 250
+POSITION_TOLERANCE = 250
 
 class ElevatorPosition(IntEnum):
     GROUND = 0
     ROCKET1 = 1000
-    ROCKET2 = 2000
-    ROCKET3 = 3000
+    ROCKET2 = 5000
+    ROCKET3 = 10000
 
 class Elevator:
 
@@ -25,11 +25,9 @@ class Elevator:
 
     motor = WPI_TalonSRX
     slave_motor = WPI_TalonSRX
-    wrist_motor = WPI_TalonSRX
-    solenoid = DoubleSolenoid
     reverse_limit = DigitalInput
 
-    kFreeSpeed = tunable(0.1)
+    kFreeSpeed = tunable(0.3)
     kZeroingSpeed = tunable(0.1)
     kP = tunable(0.3)
     kI = tunable(0.0)
@@ -44,25 +42,28 @@ class Elevator:
     error = tunable(0)
 
     def setup(self):
-        self.state = ElevatorState.LOCKED
-        self.pending_position = None
+        self.pending_position = ElevatorPosition.GROUND
         self.pending_drive = None
         self._temp_hold = None
 
         self.has_zeroed = False
         self.needs_brake = False
         self.braking_direction = None
-
+        
         self.motor.setInverted(True)
         self.motor.configSelectedFeedbackSensor(
             WPI_TalonSRX.FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0)
         self.motor.selectProfileSlot(0, 0)
         self.motor.setSensorPhase(True)
-
+        
         self.motor.config_kP(0, self.kP, 0)
         self.motor.config_kI(0, self.kI, 0)
         self.motor.config_kD(0, self.kD, 0)
         self.motor.config_kF(0, self.kF, 0)
+
+        self.slave_motor.setInverted(False)
+        self.slave_motor.setSensorPhase(True)
+        self.slave_motor.set(WPI_TalonSRX.ControlMode.Follower,self.motor.getDeviceID())
 
         try:
             self.motor.configMotionCruiseVelocity(self.kCruiseVelocity, 0)
@@ -84,14 +85,27 @@ class Elevator:
         return abs(self.get_encoder_position() - position) <= \
             POSITION_TOLERANCE
 
-    def lock(self):
-        self.state = ElevatorState.LOCKED
-
-    def release_lock(self):
-        self.state = ElevatorState.RELEASED
-
     def lower_to_ground(self):
         self.pending_position = ElevatorPosition.GROUND
+
+    def raise_to_rocket_one(self):
+        self.pending_position = ElevatorPosition.ROCKET1
+        
+    def raise_to_rocket_two(self):
+        self.pending_position = ElevatorPosition.ROCKET2
+
+    def raise_to_rocket_three(self):
+        self.pending_position = ElevatorPosition.ROCKET3
+
+    def toggle_rocket(self):
+        if self.pending_position == ElevatorPosition.GROUND:
+            self.raise_to_rocket_one()
+        elif self.pending_position == ElevatorPosition.ROCKET1:
+            self.raise_to_rocket_two()
+        elif self.pending_position == ElevatorPosition.ROCKET2:
+            self.raise_to_rocket_three()
+        else:
+            self.lower_to_ground()
 
     def move_incremental(self, amount):
         '''
@@ -156,7 +170,7 @@ class Elevator:
             # If not zeroed, try out "best shot" at getting to desired places
             if not self.has_zeroed:
                 if self.pending_position == ElevatorPosition.GROUND or \
-                        self.pending_position == ElevatorPosition.CARRYING:
+                        self.pending_position == ElevatorPosition.ROCKET1:
                     # Drive downwards until we zero it
                     self._temp_hold = None
                     self.motor.set(WPI_TalonSRX.ControlMode.PercentOutput,
@@ -187,12 +201,6 @@ class Elevator:
                 velocity = self.motor.getQuadratureVelocity()
                 self.braking_direction = velocity / abs(velocity or 1)
             self.motor.set(WPI_TalonSRX.ControlMode.PercentOutput, 0)
-
-        # Elevator deployment/retraction
-        if self.state == ElevatorState.LOCKED:
-            self.solenoid.set(DoubleSolenoid.Value.kReverse)
-        elif self.state == ElevatorState.RELEASED:
-            self.solenoid.set(DoubleSolenoid.Value.kForward)
 
         # Update dashboard PID values
         if self.pending_position:
