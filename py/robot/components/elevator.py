@@ -14,14 +14,14 @@ POSITION_TOLERANCE = 250
 
 class ElevatorPosition(IntEnum):
     GROUND = 0
-    ROCKET1 = 1000
-    ROCKET2 = 5000
-    ROCKET3 = 10000
+    ROCKET1 = 6000
+    ROCKET2 = 12000
+    ROCKET3 = 20000
 
 class Elevator:
 
     USE_MOTIONMAGIC = True
-    USE_LIMIT_SWITCH = True
+    USE_LIMIT_SWITCH = False
 
     motor = WPI_TalonSRX
     slave_motor = WPI_TalonSRX
@@ -46,11 +46,11 @@ class Elevator:
         self.pending_drive = None
         self._temp_hold = None
 
-        self.has_zeroed = False
+        self.has_zeroed = True
         self.needs_brake = False
         self.braking_direction = None
         
-        self.motor.setInverted(True)
+        self.motor.setInverted(False)
         self.motor.configSelectedFeedbackSensor(
             WPI_TalonSRX.FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0)
         self.motor.selectProfileSlot(0, 0)
@@ -61,8 +61,7 @@ class Elevator:
         self.motor.config_kD(0, self.kD, 0)
         self.motor.config_kF(0, self.kF, 0)
 
-        self.slave_motor.setInverted(False)
-        self.slave_motor.setSensorPhase(True)
+        self.slave_motor.setInverted(True)
         self.slave_motor.set(WPI_TalonSRX.ControlMode.Follower,self.motor.getDeviceID())
 
         try:
@@ -111,8 +110,7 @@ class Elevator:
         '''
         Move `amount` inches.
         '''
-        self.pending_position = self.get_encoder_position() + \
-            amount / DISTANCE_PER_REV * UNITS_PER_REV
+        self.pending_position = self.get_encoder_position() + amount
 
     def raise_freely(self):
         self.pending_drive = self.kFreeSpeed
