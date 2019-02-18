@@ -10,18 +10,16 @@ from common import rumbler
 CONTROLLER_LEFT = wpilib.XboxController.Hand.kLeft
 CONTROLLER_RIGHT = wpilib.XboxController.Hand.kRight
 
-AUTO_PLACE = False
-MANIPULATOR_RANGE = 3.0
-
 class SpartaBot(magicbot.MagicRobot):
 
     drivetrain = drivetrain.Drivetrain
-    #irsensor = irsensor.IRSensor
     targeting = targeting.Targeting
     field = field.Field
     manipulator = manipulator.Manipulator
     elevator = elevator.Elevator
     wrist = wrist.Wrist
+    
+    #irsensor = irsensor.IRSensor
     #position_controller = position_controller.PositionController
     #angle_controller = angle_controller.AngleController    
     #trajectory_controller = trajectory_controller.TrajectoryController
@@ -60,15 +58,18 @@ class SpartaBot(magicbot.MagicRobot):
 
     def teleopInit(self):
         self.drivetrain.reset_angle_correction()
-        self.wrist.reset_angle()
+        self.wrist.reset_position()
         self.manipulator.retract()
         self.carrying = False
-        self.buffer = [1000,6000,12000,18000]
+        
+        self.elevator_buffer = [100,2900,12000,20000]
+        self.elevator_buffer_index = 0
 
     def teleopPeriodic(self):
         angle = self.drive_controller.getX(CONTROLLER_RIGHT)
         self.drivetrain.angle_corrected_differential_drive(
             self.drive_controller.getY(CONTROLLER_LEFT), angle)
+
         if self.drive_controller.getBumperReleased(CONTROLLER_LEFT):
             self.manipulator.switch()
             self.wrist.carrying = not self.wrist.carrying
@@ -76,19 +77,19 @@ class SpartaBot(magicbot.MagicRobot):
             self.manipulator.shift_pad()
 
         if self.drive_controller.getAButtonReleased():
-            self.wrist.move_to(2000)
+            self.wrist.move_to(2050)
         elif self.drive_controller.getBButtonReleased():
-            self.wrist.move_to(100)
+            self.wrist.move_to(50)
 
         if self.drive_controller.getXButtonReleased():
-            self.elevator.move_to(self.buffer[0])
-            self.buffer = self.buffer[1:]+[self.buffer[0]]
+            if self.elevator_buffer_index<len(self.elevator_buffer):
+                self.elevator_buffer_index += 1
+                self.elevator.move_to(self.elevator_buffer[self.elevator_buffer_index])
         elif self.drive_controller.getYButtonReleased():
-            self.elevator.move_to(self.buffer[-1])
-            self.buffer = [self.buffer[-1]] + self.buffer[:-1]
+            if self.elevator_buffer_index>0:
+                self.elevator_buffer_index -= 1
+                self.elevator.move_to(self.elevator_buffer[self.elevator_buffer_index])
 
-        #print(self.wrist.carrying, self.wrist.front, self.wrist.get_position(), self.wrist.motor.getOutputCurrent())
-        print(self.elevator.pending_position, self.buffer)
     
 if __name__ == '__main__':
     wpilib.run(SpartaBot)

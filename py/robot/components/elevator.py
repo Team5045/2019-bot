@@ -3,14 +3,11 @@ from magicbot import tunable
 from ctre import WPI_TalonSRX
 from enum import IntEnum
 from wpilib import DoubleSolenoid, DigitalInput
-
 from constants import TALON_TIMEOUT
-
-UNITS_PER_REV = 4096
-DISTANCE_PER_REV = math.pi * 1.786  # pi * sprocket diameter
 
 GROUND_CUTOFF = 250
 POSITION_TOLERANCE = 250
+
 
 class ElevatorPosition(IntEnum):
     GROUND = 0
@@ -21,7 +18,7 @@ class ElevatorPosition(IntEnum):
 class Elevator:
 
     USE_MOTIONMAGIC = True
-    USE_LIMIT_SWITCH = False
+    USE_LIMIT_SWITCH = True
 
     motor = WPI_TalonSRX
     slave_motor = WPI_TalonSRX
@@ -42,27 +39,30 @@ class Elevator:
     error = tunable(0)
 
     def setup(self):
-        self.pending_position = ElevatorPosition.GROUND
+        self.pending_position = None
         self.pending_drive = None
         self._temp_hold = None
 
         self.has_zeroed = True
         self.needs_brake = False
         self.braking_direction = None
-        
+
         self.motor.setInverted(False)
         self.motor.configSelectedFeedbackSensor(
             WPI_TalonSRX.FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0)
         self.motor.selectProfileSlot(0, 0)
         self.motor.setSensorPhase(True)
-        
+
         self.motor.config_kP(0, self.kP, 0)
         self.motor.config_kI(0, self.kI, 0)
         self.motor.config_kD(0, self.kD, 0)
         self.motor.config_kF(0, self.kF, 0)
 
+        self.motor.configPeakOutputReverse(-0.1, TALON_TIMEOUT)
+
         self.slave_motor.setInverted(True)
-        self.slave_motor.set(WPI_TalonSRX.ControlMode.Follower,self.motor.getDeviceID())
+        self.slave_motor.set(
+            WPI_TalonSRX.ControlMode.Follower, self.motor.getDeviceID())
 
         try:
             self.motor.configMotionCruiseVelocity(self.kCruiseVelocity, 0)
@@ -89,7 +89,7 @@ class Elevator:
 
     def raise_to_rocket_one(self):
         self.pending_position = ElevatorPosition.ROCKET1
-        
+
     def raise_to_rocket_two(self):
         self.pending_position = ElevatorPosition.ROCKET2
 
@@ -120,14 +120,13 @@ class Elevator:
 
     def execute(self):
         # For debugging
-        # print('elevator', 'drive', self.pending_drive,
-        #       'lim', self.reverse_limit.get(),
-        #       'pending_pos', self.pending_position,
-        #       'setpoint', self.setpoint,
-        #       'val', self.value,
-        #       'err', self.error,
-        #       'curr_pos', self.motor.getQuadraturePosition(),
-        #       'curr_velo', self.motor.getQuadratureVelocity())
+        print('elevator', 'drive', self.pending_drive, 'lim', self.reverse_limit.get(),
+              'pending_pos', self.pending_position,
+              'setpoint', self.setpoint,
+              'val', self.value,
+              'err', self.error,
+              'curr_pos', self.motor.getQuadraturePosition(),
+              'curr_velo', self.motor.getQuadratureVelocity())
 
         # Brake - apply the brake either when we reach peak of movement
         # (for upwards motion), and thus ds/dt = v = 0, or else immediately
