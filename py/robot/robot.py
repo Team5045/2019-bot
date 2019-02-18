@@ -59,18 +59,37 @@ class SpartaBot(magicbot.MagicRobot):
         self.teleopPeriodic() 
 
     def teleopInit(self):
-        self.drivetrain.shift_high_gear()
         self.drivetrain.reset_angle_correction()
         self.wrist.reset_angle()
+        self.manipulator.retract()
+        self.carrying = False
+        self.buffer = [1000,6000,12000,18000]
 
     def teleopPeriodic(self):
         angle = self.drive_controller.getX(CONTROLLER_RIGHT)
         self.drivetrain.angle_corrected_differential_drive(
             self.drive_controller.getY(CONTROLLER_LEFT), angle)
+        if self.drive_controller.getBumperReleased(CONTROLLER_LEFT):
+            self.manipulator.switch()
+            self.wrist.carrying = not self.wrist.carrying
+        if self.drive_controller.getBumperReleased(CONTROLLER_RIGHT):
+            self.manipulator.shift_pad()
 
         if self.drive_controller.getAButtonReleased():
-            self.wrist.move_to(500)
-        print(self.wrist.get_position())
+            self.wrist.move_to(2000)
+        elif self.drive_controller.getBButtonReleased():
+            self.wrist.move_to(100)
 
+        if self.drive_controller.getXButtonReleased():
+            self.elevator.move_to(self.buffer[0])
+            self.buffer = self.buffer[1:]+[self.buffer[0]]
+        elif self.drive_controller.getYButtonReleased():
+            self.elevator.move_to(self.buffer[-1])
+            self.buffer = [self.buffer[-1]] + self.buffer[:-1]
+
+        #print(self.wrist.carrying, self.wrist.front, self.wrist.get_position(), self.wrist.motor.getOutputCurrent())
+        print(self.elevator.pending_position, self.buffer)
+    
 if __name__ == '__main__':
     wpilib.run(SpartaBot)
+

@@ -5,12 +5,12 @@ from wpilib import DoubleSolenoid
 from constants import TALON_TIMEOUT
 
 class ClawState(IntEnum):
-    RETRACTED = 0
-    EXTENDED = 1
+    EXTENDED = 0
+    RETRACTED = 1
 
 class ShiftState(IntEnum):
-    RETRACTED = 0
-    EXTENDED = 1
+    EXTENDED = 0
+    RETRACTED = 1
 
 class Manipulator:
 
@@ -47,10 +47,10 @@ class Manipulator:
         self.roller_motor.set(speed)
     
     def shift_pad(self):
-        if self.shift == ShiftState.EXTENDED:
-            self.shift = ShiftState.RETRACTED
-        elif self.shift == ShiftState.RETRACTED:
-            self.shift = ShiftState.EXTENDED
+        if self.shift_state == ShiftState.EXTENDED:
+            self.shift_state = ShiftState.RETRACTED
+        elif self.shift_state == ShiftState.RETRACTED:
+            self.shift_state = ShiftState.EXTENDED
 
 
     def get_state(self):
@@ -65,14 +65,14 @@ class Manipulator:
 
     def execute(self):
         if self.state == ClawState.RETRACTED:
-            self.solenoid.set(DoubleSolenoid.Value.kReverse)
-        elif self.state == ClawState.EXTENDED:
             self.solenoid.set(DoubleSolenoid.Value.kForward)
+        elif self.state == ClawState.EXTENDED:
+            self.solenoid.set(DoubleSolenoid.Value.kReverse)
 
         if self.shift_state == ShiftState.RETRACTED:
-            self.shift.set(DoubleSolenoid.Value.kReverse)
-        elif self.shift_state == ShiftState.EXTENDED:
             self.shift.set(DoubleSolenoid.Value.kForward)
+        elif self.shift_state == ShiftState.EXTENDED:
+            self.shift.set(DoubleSolenoid.Value.kReverse)
 
         self.run_belt(self.speed)
         self.run_roller(self.speed)

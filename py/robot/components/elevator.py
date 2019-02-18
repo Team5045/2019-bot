@@ -106,11 +106,11 @@ class Elevator:
         else:
             self.lower_to_ground()
 
-    def move_incremental(self, amount):
+    def move_to(self, amount):
         '''
         Move `amount` inches.
         '''
-        self.pending_position = self.get_encoder_position() + amount
+        self.pending_position = amount
 
     def raise_freely(self):
         self.pending_drive = self.kFreeSpeed
