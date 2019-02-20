@@ -25,10 +25,10 @@ class Targeting:
 
     def get_data(self):
         return TargetingData(found=self.nt.getNumber('tv', 0) == 1,
-                             x=self.nt.getNumber('tx', 0),
-                             y=self.nt.getNumber('ty', 0),
-                             area=self.nt.getNumber('ta', 0),
-                            skew=self.nt.getNumber('ts', 0))
+                             x=(self.nt.getNumber('tx', 0)),
+                             y=(self.nt.getNumber('ty', 0)),
+                             area=(self.nt.getNumber('ta', 0)),
+                            skew=(self.nt.getNumber('ts', 0)))
 
     def isOriented(self):
         return self.oriented

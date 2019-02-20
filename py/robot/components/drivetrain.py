@@ -27,7 +27,7 @@ DISTANCE_PER_REV_METERS = (2 * math.pi * RADIUS_METERS) / (3 / 1) / (54 / 30)
 
 DEADBAND = 0.05
 
-USE_CURVATURE_DRIVE = True
+USE_CURVATURE_DRIVE = False
 
 
 class Drivetrain:

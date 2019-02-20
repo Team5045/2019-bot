@@ -10,10 +10,11 @@ POSITION_TOLERANCE = 250
 
 
 class ElevatorPosition(IntEnum):
-    GROUND = 0
-    ROCKET1 = 6000
+    GROUND = 100
+    ROCKET1 = 2900
     ROCKET2 = 12000
     ROCKET3 = 20000
+
 
 class Elevator:
 
@@ -46,6 +47,13 @@ class Elevator:
         self.has_zeroed = True
         self.needs_brake = False
         self.braking_direction = None
+
+        self.buffer = [ElevatorPosition.ROCKET1,
+                       ElevatorPosition.ROCKET2,
+                       ElevatorPosition.ROCKET3
+                       ]
+
+        self.index = 0
 
         self.motor.setInverted(False)
         self.motor.configSelectedFeedbackSensor(
@@ -87,24 +95,13 @@ class Elevator:
     def lower_to_ground(self):
         self.pending_position = ElevatorPosition.GROUND
 
-    def raise_to_rocket_one(self):
-        self.pending_position = ElevatorPosition.ROCKET1
+    def toggle(self, pos=True):
+        if pos and self.index+1 in range(len(self.buffer)):
+            self.index+=1
+        elif not pos and self.index-1 in range(len(self.buffer)):
+            self.index-=1
 
-    def raise_to_rocket_two(self):
-        self.pending_position = ElevatorPosition.ROCKET2
-
-    def raise_to_rocket_three(self):
-        self.pending_position = ElevatorPosition.ROCKET3
-
-    def toggle_rocket(self):
-        if self.pending_position == ElevatorPosition.GROUND:
-            self.raise_to_rocket_one()
-        elif self.pending_position == ElevatorPosition.ROCKET1:
-            self.raise_to_rocket_two()
-        elif self.pending_position == ElevatorPosition.ROCKET2:
-            self.raise_to_rocket_three()
-        else:
-            self.lower_to_ground()
+        self.pending_position = self.buffer[self.index]
 
     def move_to(self, amount):
         '''
@@ -120,13 +117,13 @@ class Elevator:
 
     def execute(self):
         # For debugging
-        print('elevator', 'drive', self.pending_drive, 'lim', self.reverse_limit.get(),
-              'pending_pos', self.pending_position,
-              'setpoint', self.setpoint,
-              'val', self.value,
-              'err', self.error,
-              'curr_pos', self.motor.getQuadraturePosition(),
-              'curr_velo', self.motor.getQuadratureVelocity())
+        #print('elevator', 'drive', self.pending_drive, 'lim', self.reverse_limit.get(),
+        #      'pending_pos', self.pending_position,
+        #      'setpoint', self.setpoint,
+        #      'val', self.value,
+        #      'err', self.error,
+        #      'curr_pos', self.motor.getQuadraturePosition(),
+        #      'curr_velo', self.motor.getQuadratureVelocity())
 
         # Brake - apply the brake either when we reach peak of movement
         # (for upwards motion), and thus ds/dt = v = 0, or else immediately

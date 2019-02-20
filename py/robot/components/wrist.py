@@ -2,6 +2,11 @@ from ctre import WPI_TalonSRX
 from magicbot import tunable
 from constants import TALON_TIMEOUT
 from wpilib import PIDController
+from enum import IntEnum
+
+class WristPosition(IntEnum):
+    START = 50
+    PLACE = 2100
 
 class Wrist:
 
@@ -17,9 +22,6 @@ class Wrist:
     error = tunable(0)
 
     def setup(self):
-        self.pending_drive = None
-        self.carrying = False
-        self.front = None
 
         self.motor.setSensorPhase(True)
         self.motor.setInverted(False)
@@ -51,6 +53,12 @@ class Wrist:
     def move_to(self, position):
         self.setpoint = position
 
+    def raise_to_placement(self):
+        self.move_to(WristPosition.PLACE)
+
+    def return_to_start(self):
+        self.move_to(WristPosition.START)
+
     def is_encoder_connected(self):
         return self.motor.getPulseWidthRiseToRiseUs() != 0
 
@@ -75,14 +83,13 @@ class Wrist:
         #      'curr_velo', self.motor.getQuadratureVelocity())
 
         self.motor.set(WPI_TalonSRX.ControlMode.MotionMagic, self.setpoint)
-        
+
         try:
             self.value = self.motor.getSelectedSensorPosition(0)
             self.error = self.motor.getClosedLoopError(0)
         except NotImplementedError:
             # Simulator doesn't implement getError
-            pass
-
+            pass            
 
     def on_disable(self):
         self.stop()
