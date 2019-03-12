@@ -14,7 +14,6 @@ class ShiftState(IntEnum):
 
 class Manipulator:
 
-    belt_motor = WPI_TalonSRX
     roller_motor = WPI_TalonSRX
     solenoid = DoubleSolenoid
     shift = DoubleSolenoid
@@ -22,11 +21,9 @@ class Manipulator:
     def setup(self):
         self.state = ClawState.RETRACTED
         self.shift_state = ShiftState.RETRACTED
-        self.belt_motor.setSensorPhase(True)
         self.roller_motor.setInverted(True)
         self.roller_motor.setSensorPhase(True)
-
-        self.speed = 0.0
+        self.roller_motor.setNeutralMode(1)
 
     def switch(self):
         if self.state == ClawState.EXTENDED:
@@ -40,9 +37,6 @@ class Manipulator:
     def retract(self):
         self.state = ClawState.RETRACTED
 
-    def run_belt(self, speed):
-        self.belt_motor.set(speed)
-
     def run_roller(self, speed):
         self.roller_motor.set(speed)
     
@@ -51,7 +45,6 @@ class Manipulator:
             self.shift_state = ShiftState.RETRACTED
         elif self.shift_state == ShiftState.RETRACTED:
             self.shift_state = ShiftState.EXTENDED
-
 
     def get_state(self):
         return {
@@ -73,6 +66,3 @@ class Manipulator:
             self.shift.set(DoubleSolenoid.Value.kForward)
         elif self.shift_state == ShiftState.EXTENDED:
             self.shift.set(DoubleSolenoid.Value.kReverse)
-
-        self.run_belt(self.speed)
-        self.run_roller(self.speed)

@@ -17,6 +17,7 @@ class SpartaBot(magicbot.MagicRobot):
     manipulator = manipulator.Manipulator
     elevator = elevator.Elevator
     wrist = wrist.Wrist
+    lift = lift.Lift
 
     alignment_controller = alignment_controller.AlignmentController
 
@@ -31,8 +32,7 @@ class SpartaBot(magicbot.MagicRobot):
         self.drivetrain_shifter_solenoid = wpilib.Solenoid(2)
         self.navx = navx.AHRS.create_spi()
 
-        self.manipulator_belt_motor = ctre.WPI_TalonSRX(0)
-        self.manipulator_roller_motor = ctre.WPI_TalonSRX(6)
+        self.manipulator_roller_motor = ctre.WPI_TalonSRX(4)
         self.manipulator_solenoid = wpilib.DoubleSolenoid(1, 3)
         self.manipulator_shift = wpilib.DoubleSolenoid(0, 4)
 
@@ -42,19 +42,21 @@ class SpartaBot(magicbot.MagicRobot):
 
         self.wrist_motor = ctre.WPI_TalonSRX(8)
 
+        self.lift_solenoid = wpilib.DoubleSolenoid(5,6)
+
         self.disable_toggle = False
         self.front = False
 
     def autonomousInit(self):
-        self.teleopInit()
+        self.drivetrain.reset_angle_correction()
+        self.manipulator.retract()
+        self.wrist.reset_position()
 
     def autonomousPeriodic(self):
         self.teleopPeriodic()
 
     def teleopInit(self):
-        self.drivetrain.reset_angle_correction()
-        self.manipulator.retract()
-        self.wrist.reset_position()
+        pass
 
     def teleopPeriodic(self):
         angle = self.drive_controller.getX(CONTROLLER_RIGHT)
@@ -63,24 +65,29 @@ class SpartaBot(magicbot.MagicRobot):
 
         if self.drive_controller.getBumperReleased(CONTROLLER_LEFT):
             self.manipulator.switch()
-
         if self.drive_controller.getBumperReleased(CONTROLLER_RIGHT):
             self.manipulator.shift_pad()
 
-        if self.drive_controller.getStickButtonReleased(CONTROLLER_LEFT):
-            self.drivetrain.shift_toggle()
+        if self.drive_controller.getTriggerAxis(CONTROLLER_LEFT)>0.5:
+            self.manipulator.run_roller(0.5)
+        elif self.drive_controller.getTriggerAxis(CONTROLLER_RIGHT)>0.5:
+            self.manipulator.run_roller(-0.5)
+        else:
+            self.manipulator.run_roller(0)
 
         if self.drive_controller.getAButtonReleased():
-            self.wrist.raise_to_placement()
-        if self.drive_controller.getBButtonReleased():
-            self.wrist.return_to_start()
+            self.wrist.toggle_forward()
+        elif self.drive_controller.getBButtonReleased():
+            self.wrist.toggle_backward()
 
         if self.drive_controller.getXButtonReleased():
             self.elevator.toggle()
-        if self.drive_controller.getYButtonReleased():
+        elif self.drive_controller.getYButtonReleased():
             self.elevator.toggle(False)
 
-        if self.drive_controller.getTriggerAxis(CONTROLLER_RIGHT)>0.9:
+        if self.drive_controller.getStickButtonReleased(CONTROLLER_LEFT):
+            self.drivetrain.shift_toggle()
+        if self.drive_controller.getStickButtonPressed(CONTROLLER_RIGHT):
             self.alignment_controller.move_to(0)
         else:
             self.alignment_controller.stop()

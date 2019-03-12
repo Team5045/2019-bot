@@ -8,11 +8,7 @@ class LiftState(IntEnum):
     RETRACTED = 0
     EXTENDED = 1
 
-
 class Lift:
-
-    belt_motor = WPI_TalonSRX
-    roller_motor = WPI_TalonSRX
     solenoid = DoubleSolenoid
 
     def setup(self):

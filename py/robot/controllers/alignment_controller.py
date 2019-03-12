@@ -64,5 +64,3 @@ class AlignmentController:
     def stop(self):
         self.angle_pid_controller.disable()
 
-    def on_disable(self):
-        self.stop()
