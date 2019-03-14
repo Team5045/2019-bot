@@ -77,7 +77,8 @@ class Drivetrain:
                                              self.right_motor_master)
         self.robot_drive.setDeadband(0)
         self.robot_drive.setSafetyEnabled(False)
-
+        self.reset_angle_correction()
+        
     def is_left_encoder_connected(self):
         return self.left_motor_master.getPulseWidthRiseToRiseUs() != 0
 

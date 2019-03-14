@@ -5,9 +5,8 @@ from wpilib import PIDController
 from enum import IntEnum
 
 class WristPosition(IntEnum):
-    START = 50
-    BALL = 200000
-    PANEL = 600000
+    START = 0
+    PANEL =  375000
 
 class Wrist:
 
@@ -50,6 +49,7 @@ class Wrist:
         self.motor.configMotionCruiseVelocity(60000, TALON_TIMEOUT)
         self.motor.configMotionAcceleration(16000, TALON_TIMEOUT)
         self.motor.setSelectedSensorPosition(0, 0, TALON_TIMEOUT)
+        self.reset_position()
 
     def move_to(self, position):
         self.setpoint = position
@@ -57,27 +57,17 @@ class Wrist:
     def raise_to_panel(self):
         self.move_to(WristPosition.PANEL)
 
-    def raise_to_ball(self):
-        self.move_to(WristPosition.BALL)
-
     def return_to_start(self):
         self.move_to(WristPosition.START)
 
+    def move_incremental(self,x):
+        self.move_to(self.setpoint+x)
+
     def toggle_forward(self):
         if self.setpoint == WristPosition.START:
-            self.raise_to_ball()
-        elif self.setpoint == WristPosition.BALL:
             self.raise_to_panel()
         else:
             self.return_to_start()
-
-    def toggle_backward(self):
-        if self.setpoint == WristPosition.START:
-            self.raise_to_panel()
-        elif self.setpoint == WristPosition.BALL:
-            self.return_to_start()
-        else:
-            self.raise_to_ball()
 
     def is_encoder_connected(self):
         return self.motor.getPulseWidthRiseToRiseUs() != 0

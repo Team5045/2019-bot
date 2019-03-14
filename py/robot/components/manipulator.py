@@ -23,7 +23,7 @@ class Manipulator:
         self.shift_state = ShiftState.RETRACTED
         self.roller_motor.setInverted(True)
         self.roller_motor.setSensorPhase(True)
-        self.roller_motor.setNeutralMode(1)
+        self.retract()
 
     def switch(self):
         if self.state == ClawState.EXTENDED:

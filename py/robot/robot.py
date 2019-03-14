@@ -21,18 +21,20 @@ class SpartaBot(magicbot.MagicRobot):
 
     alignment_controller = alignment_controller.AlignmentController
 
+    use_teleop_in_autonomous = True
+
     def createObjects(self):
         self.drive_controller = wpilib.XboxController(0)
         self.compressor = wpilib.Compressor()
 
         self.drivetrain_left_motor_master = ctre.WPI_TalonSRX(3)
         self.drivetrain_left_motor_slave = ctre.WPI_TalonSRX(2)
-        self.drivetrain_right_motor_master = ctre.WPI_TalonSRX(4)
-        self.drivetrain_right_motor_slave = ctre.WPI_TalonSRX(5)
+        self.drivetrain_right_motor_master = ctre.WPI_TalonSRX(5)
+        self.drivetrain_right_motor_slave = ctre.WPI_TalonSRX(4)
         self.drivetrain_shifter_solenoid = wpilib.Solenoid(2)
         self.navx = navx.AHRS.create_spi()
 
-        self.manipulator_roller_motor = ctre.WPI_TalonSRX(4)
+        self.manipulator_roller_motor = ctre.WPI_TalonSRX(6)
         self.manipulator_solenoid = wpilib.DoubleSolenoid(1, 3)
         self.manipulator_shift = wpilib.DoubleSolenoid(0, 4)
 
@@ -44,17 +46,6 @@ class SpartaBot(magicbot.MagicRobot):
 
         self.lift_solenoid = wpilib.DoubleSolenoid(5,6)
 
-        self.disable_toggle = False
-        self.front = False
-
-    def autonomousInit(self):
-        self.drivetrain.reset_angle_correction()
-        self.manipulator.retract()
-        self.wrist.reset_position()
-
-    def autonomousPeriodic(self):
-        self.teleopPeriodic()
-
     def teleopInit(self):
         pass
 
@@ -65,20 +56,18 @@ class SpartaBot(magicbot.MagicRobot):
 
         if self.drive_controller.getBumperReleased(CONTROLLER_LEFT):
             self.manipulator.switch()
-        if self.drive_controller.getBumperReleased(CONTROLLER_RIGHT):
-            self.manipulator.shift_pad()
+        if self.drive_controller.getBumperReleased(CONTROLLER_RIGHT) and self.drive_controller.getStickButtonReleased(CONTROLLER_RIGHT):
+            self.lift.switch()
 
         if self.drive_controller.getTriggerAxis(CONTROLLER_LEFT)>0.5:
-            self.manipulator.run_roller(0.5)
-        elif self.drive_controller.getTriggerAxis(CONTROLLER_RIGHT)>0.5:
             self.manipulator.run_roller(-0.5)
+        elif self.drive_controller.getTriggerAxis(CONTROLLER_RIGHT)>0.5:
+            self.manipulator.run_roller(0.5)
         else:
             self.manipulator.run_roller(0)
 
         if self.drive_controller.getAButtonReleased():
             self.wrist.toggle_forward()
-        elif self.drive_controller.getBButtonReleased():
-            self.wrist.toggle_backward()
 
         if self.drive_controller.getXButtonReleased():
             self.elevator.toggle()
@@ -92,6 +81,7 @@ class SpartaBot(magicbot.MagicRobot):
         else:
             self.alignment_controller.stop()
         
+        print(self.wrist.get_position())
 
 if __name__ == '__main__':
     wpilib.run(SpartaBot)
