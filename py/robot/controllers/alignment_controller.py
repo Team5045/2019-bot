@@ -4,63 +4,42 @@ import hal
 from networktables import NetworkTables
 
 from components.drivetrain import Drivetrain
-from components.targeting import Targeting
-
 
 class AlignmentController:
 
-    drivetrain = Drivetrain
-    targeting = Targeting
+    drivetrain : Drivetrain
 
-    rate = .5
-    kP = 0.05
-    kI = 0
-    kD = 0.005
-    kF = 0
+    def setup(self):
+        self.table = NetworkTables.getTable("limelight")
+        self.kP = 0.2
+        self.minCommand = 0.05
+        self.tx = 1
+        self.aligned = False
 
-    def __init__(self):
-        self.angle = None
-        self.angle_pid_controller = PIDController(
-            Kp=self.kP, Ki=self.kI, Kd=self.kD, Kf=self.kF,
-            source=self.get_angle,
-            output=self.pidWriteAngle)
-        self.angle_pid_controller.setInputRange(-180, 180)
-        self.angle_pid_controller.setContinuous(True)
-        self.angle_pid_controller.setOutputRange(-self.rate,
-                                                 self.rate)
-        self.nt = NetworkTables.getTable('limelight')
+    def autoCheck(self):
+        return self.table.getNumber("tv", 0) != 0
 
-    def get_position(self):
-        return self.drivetrain.get_position()
+    def distCheck(self):
+        return self.tx > 0.05
 
-    def get_angle(self):
-        angle = self.targeting.get_data().x
-        if angle!=0.0:
-            self.angle = angle
-        return self.angle
+    def otherCheck(self):
+        return self.tx < -0.05
 
-    def found(self):
-        fnd = self.targeting.get_data().found
-        if fnd == 1:
-            return True
-        else:
-            return False
+    def isAligned(self):
+        return abs(self.tx) < 0.75
 
-    def move_to(self, position):
-        self.setpoint = position
-        self.angle_pid_controller.enable()
-
-    def pidWriteAngle(self, rate):
-        self.rate = rate
+    def autoAlign(self):
+        if not self.isAligned():
+            z = max([self.tx * self.kP + self.minCommand,0.25])
+            self.drivetrain.set_manual_mode(True)
+            if self.distCheck():
+                self.drivetrain.manual_drive(z,-z)
+            elif self.otherCheck():
+                self.drivetrain.manual_drive(-z,z)
 
     def execute(self):
-        if self.rate is not None:
-            if self.found():
-                self.drivetrain.differential_drive(0)
-                self.stop()
-            else:
-                self.drivetrain.manual_drive(-self.rate, self.rate)
-
-    def stop(self):
-        self.angle_pid_controller.disable()
-
+        if self.autoCheck():
+            self.tx = self.table.getNumber("tx", 0)
+        print("autocheck", self.autoCheck())
+        print("align", self.isAligned())
+        print("tx", self.tx)

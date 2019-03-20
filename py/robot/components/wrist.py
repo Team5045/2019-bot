@@ -6,7 +6,8 @@ from enum import IntEnum
 
 class WristPosition(IntEnum):
     START = 0
-    PANEL =  375000
+    BALL = 700
+    PANEL = 2550
 
 class Wrist:
 
@@ -37,8 +38,8 @@ class Wrist:
         
         self.motor.configNominalOutputForward(0, TALON_TIMEOUT)
         self.motor.configNominalOutputReverse(0, TALON_TIMEOUT)
-        self.motor.configPeakOutputForward(.75, TALON_TIMEOUT)
-        self.motor.configPeakOutputReverse(-.75, TALON_TIMEOUT)
+        self.motor.configPeakOutputForward(.85, TALON_TIMEOUT)
+        self.motor.configPeakOutputReverse(-.85, TALON_TIMEOUT)
 
         self.motor.selectProfileSlot(0, 0)
         self.motor.config_kP(0, self.kP, 0)
@@ -46,8 +47,8 @@ class Wrist:
         self.motor.config_kD(0, self.kD, 0)
         self.motor.config_kF(0, self.kF, 0)
 
-        self.motor.configMotionCruiseVelocity(60000, TALON_TIMEOUT)
-        self.motor.configMotionAcceleration(16000, TALON_TIMEOUT)
+        self.motor.configMotionCruiseVelocity(6000, TALON_TIMEOUT)
+        self.motor.configMotionAcceleration(1600, TALON_TIMEOUT)
         self.motor.setSelectedSensorPosition(0, 0, TALON_TIMEOUT)
         self.reset_position()
 
@@ -57,6 +58,9 @@ class Wrist:
     def raise_to_panel(self):
         self.move_to(WristPosition.PANEL)
 
+    def raise_to_ball(self):
+        self.move_to(WristPosition.BALL)
+
     def return_to_start(self):
         self.move_to(WristPosition.START)
 
@@ -65,9 +69,19 @@ class Wrist:
 
     def toggle_forward(self):
         if self.setpoint == WristPosition.START:
+            self.raise_to_ball()
+        elif self.setpoint == WristPosition.BALL:
             self.raise_to_panel()
         else:
             self.return_to_start()
+
+    def toggle_backward(self):
+        if self.setpoint == WristPosition.PANEL:
+            self.raise_to_ball()
+        elif self.setpoint == WristPosition.BALL:
+            self.return_to_start()
+        else:
+            self.raise_to_panel()
 
     def is_encoder_connected(self):
         return self.motor.getPulseWidthRiseToRiseUs() != 0

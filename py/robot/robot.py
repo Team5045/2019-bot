@@ -2,22 +2,20 @@ import wpilib
 import ctre
 import magicbot
 import navx
-from components import drivetrain, targeting, field, manipulator, elevator, lift, wrist
+from components import drivetrain, field, manipulator, elevator, wrist
 from controllers import alignment_controller
+from common import rumbler
 
 CONTROLLER_LEFT = wpilib.XboxController.Hand.kLeft
 CONTROLLER_RIGHT = wpilib.XboxController.Hand.kRight
 
-
 class SpartaBot(magicbot.MagicRobot):
 
     drivetrain = drivetrain.Drivetrain
-    targeting = targeting.Targeting
     field = field.Field
     manipulator = manipulator.Manipulator
     elevator = elevator.Elevator
     wrist = wrist.Wrist
-    lift = lift.Lift
 
     alignment_controller = alignment_controller.AlignmentController
 
@@ -36,7 +34,7 @@ class SpartaBot(magicbot.MagicRobot):
 
         self.manipulator_roller_motor = ctre.WPI_TalonSRX(6)
         self.manipulator_solenoid = wpilib.DoubleSolenoid(1, 3)
-        self.manipulator_shift = wpilib.DoubleSolenoid(0, 4)
+        self.manipulator_shift = wpilib.DoubleSolenoid(5,6)
 
         self.elevator_motor = ctre.WPI_TalonSRX(1)
         self.elevator_slave_motor = ctre.WPI_TalonSRX(7)
@@ -44,44 +42,51 @@ class SpartaBot(magicbot.MagicRobot):
 
         self.wrist_motor = ctre.WPI_TalonSRX(8)
 
-        self.lift_solenoid = wpilib.DoubleSolenoid(5,6)
+        self.lift_solenoid = wpilib.DoubleSolenoid(0,4)
+
+        self.toggle = True
 
     def teleopInit(self):
         pass
 
     def teleopPeriodic(self):
-        angle = self.drive_controller.getX(CONTROLLER_RIGHT)
-        self.drivetrain.angle_corrected_differential_drive(
-            self.drive_controller.getY(CONTROLLER_LEFT), angle)
-
         if self.drive_controller.getBumperReleased(CONTROLLER_LEFT):
             self.manipulator.switch()
-        if self.drive_controller.getBumperReleased(CONTROLLER_RIGHT) and self.drive_controller.getStickButtonReleased(CONTROLLER_RIGHT):
-            self.lift.switch()
+            
+        if self.drive_controller.getBumperPressed(CONTROLLER_RIGHT) and not self.alignment_controller.isAligned():
+            self.alignment_controller.autoAlign()
+            rumbler.rumble(self.drive_controller, 1)
+        else:
+            rumbler.rumble(self.drive_controller, 0)
+            self.drivetrain.set_manual_mode(False)
+            angle = self.drive_controller.getX(CONTROLLER_RIGHT)
+            self.drivetrain.angle_corrected_differential_drive(
+                self.drive_controller.getY(CONTROLLER_LEFT), angle)
 
         if self.drive_controller.getTriggerAxis(CONTROLLER_LEFT)>0.5:
-            self.manipulator.run_roller(-0.5)
+            self.manipulator.run_roller(-0.75)
         elif self.drive_controller.getTriggerAxis(CONTROLLER_RIGHT)>0.5:
-            self.manipulator.run_roller(0.5)
+            self.manipulator.run_roller(0.75)
         else:
             self.manipulator.run_roller(0)
 
         if self.drive_controller.getAButtonReleased():
             self.wrist.toggle_forward()
+        if self.drive_controller.getBButtonReleased():
+            self.wrist.move_incremental(-80)
 
         if self.drive_controller.getXButtonReleased():
             self.elevator.toggle()
-        elif self.drive_controller.getYButtonReleased():
-            self.elevator.toggle(False)
+        if self.drive_controller.getYButtonReleased():
+            self.wrist.move_incremental(80)
 
         if self.drive_controller.getStickButtonReleased(CONTROLLER_LEFT):
             self.drivetrain.shift_toggle()
-        if self.drive_controller.getStickButtonPressed(CONTROLLER_RIGHT):
-            self.alignment_controller.move_to(0)
-        else:
-            self.alignment_controller.stop()
-        
-        print(self.wrist.get_position())
+
+        if self.drive_controller.getStartButtonReleased():
+            self.elevator.true_toggle(True)
+        elif self.drive_controller.getBackButtonReleased():
+            self.elevator.true_toggle(False)
 
 if __name__ == '__main__':
     wpilib.run(SpartaBot)

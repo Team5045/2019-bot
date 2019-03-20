@@ -11,10 +11,12 @@ POSITION_TOLERANCE = 250
 
 class ElevatorPosition(IntEnum):
     GROUND = 100
-    ROCKET1 = 2900
-    ROCKET2 = 12000
-    ROCKET3 = 20000
-
+    PANEL1 = 2500
+    BALL1 = 2850
+    PANEL2 = 10700
+    BALL2 = 11300
+    PANEL3 = 18200
+    BALL3 = 19250
 
 class Elevator:
 
@@ -48,9 +50,13 @@ class Elevator:
         self.needs_brake = False
         self.braking_direction = None
 
-        self.buffer = [ElevatorPosition.ROCKET1,
-                       ElevatorPosition.ROCKET2,
-                       ElevatorPosition.ROCKET3
+        self.buffer = [ ElevatorPosition.GROUND,
+                    ElevatorPosition.PANEL1,
+                    ElevatorPosition.BALL1,
+                    ElevatorPosition.PANEL2,
+                    ElevatorPosition.BALL2,
+                    ElevatorPosition.PANEL3,
+                    ElevatorPosition.BALL3
                        ]
 
         self.index = 0
@@ -96,12 +102,24 @@ class Elevator:
         self.pending_position = ElevatorPosition.GROUND
 
     def toggle(self, pos=True):
-        if pos and self.index+1 in range(len(self.buffer)):
+        if self.index+1 in range(3):
             self.index+=1
-        elif not pos and self.index-1 in range(len(self.buffer)):
-            self.index-=1
+        else:
+            self.index = 0
+        #elif not pos and self.index-1 in range(len(self.buffer)):
+        #    self.index-=1
 
         self.pending_position = self.buffer[self.index]
+
+    def true_toggle(self,pos):
+        if pos:
+            if self.index+1 in range(len(self.buffer)):
+                self.index+=1
+            self.pending_position = self.buffer[self.index]
+        else:
+            if self.index-1 in range(len(self.buffer)):
+                self.index-=1
+            self.pending_position = self.buffer[self.index]
 
     def move_to(self, amount):
         '''
@@ -114,6 +132,9 @@ class Elevator:
 
     def lower_freely(self):
         self.pending_drive = -self.kFreeSpeed
+
+    def move_incremental(self,x):
+        self.move_to(self.setpoint+x)
 
     def execute(self):
         # For debugging

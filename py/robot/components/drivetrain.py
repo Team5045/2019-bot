@@ -116,26 +116,26 @@ class Drivetrain:
     def reset_angle_correction(self):
         self.navx.reset()
 
-    def angle_corrected_differential_drive(self, y, rotation=0):
+    def angle_corrected_differential_drive(self, y, rotation=0, rotation_scaler=0.65):
         '''
         Heading must be reset first. (drivetrain.reset_angle_correction())
         '''
 
         # Scale angle to reduce max turn
-        rotation = util.scale(rotation, -1, 1, -0.65, 0.65)
+        rotation = util.scale(rotation, -1, 1, -rotation_scaler, rotation_scaler)
 
         # Scale y-speed in high gear
         if self.pending_gear == HIGH_GEAR:
-            y = util.scale(y, -1, 1, -0.75, 0.75)
+            y = util.scale(y, -1, 1, -rotation_scaler-0.10, rotation_scaler+0.10)
 
         use_curvature = False
         quick_turn = False
 
         # Small rotation at lower speeds - and also do a quick_turn instead of
         # the normal curvature-based mode.
-        if abs(y) <= self.little_rotation_cutoff:
-            rotation = util.abs_clamp(rotation, 0, 0.7)
-            quick_turn = True
+        #if abs(y) <= self.little_rotation_cutoff:
+        #    rotation = util.abs_clamp(rotation, 0, 0.7)
+        #    quick_turn = True
 
         # NEVER USE CURVATURE
         # Curvature drive for high gear and high speedz
@@ -143,21 +143,21 @@ class Drivetrain:
         #     use_curvature = True
 
         # Angle correction
-        if abs(rotation) <= self.angle_correction_cutoff:
-            heading = self.navx.getYaw()
-            if not self.og_yaw:
-                self.og_yaw = heading
-            factor = self.angle_correction_factor_high_gear if \
-                self.pending_gear == HIGH_GEAR else \
-                self.angle_correction_factor_low_gear
-            rotation = util.abs_clamp(-factor *
-                                      (heading - self.og_yaw),
-                                      0, self.angle_correction_max)
-        else:
-            self.og_yaw = None
+        #if abs(rotation) <= self.angle_correction_cutoff:
+        #    heading = self.navx.getYaw()
+        #    if not self.og_yaw:
+        #        self.og_yaw = heading
+        #    factor = self.angle_correction_factor_high_gear if \
+        #        self.pending_gear == HIGH_GEAR else \
+        #        self.angle_correction_factor_low_gear
+        #    rotation = util.abs_clamp(-factor *
+        #                              (heading - self.og_yaw),
+        #                              0, self.angle_correction_max)
+        #else:
+        #    self.og_yaw = None
 
         self.differential_drive(y, rotation, quick_turn=quick_turn,
-                                use_curvature=use_curvature)
+                                use_curvature=use_curvature, force=True)
 
     def shift_low_gear(self):
         self.pending_gear = LOW_GEAR
